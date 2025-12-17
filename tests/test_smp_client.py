@@ -87,12 +87,12 @@ def test_constructor() -> None:
 @pytest.mark.asyncio
 async def test_connect() -> None:
     m = SMPMockTransport()
-    s = SMPClient(m, "address")
+    s = SMPClient(m, "address", 5.0)
     s._initialize = AsyncMock()  # type: ignore
     await s.connect()
 
     m.connect.assert_awaited_once_with("address", 5.0)
-    s._initialize.assert_awaited_once_with()
+    s._initialize.assert_awaited_once_with(5.0)
 
 
 @pytest.mark.asyncio
@@ -177,7 +177,7 @@ async def test_request() -> None:
 @pytest.mark.asyncio
 async def test_upload() -> None:
     m = SMPMockTransport()
-    s = SMPClient(m, "address")
+    s = SMPClient(m, "address", 2.5)
 
     s.request = AsyncMock()  # type: ignore
 
@@ -241,7 +241,7 @@ async def test_upload() -> None:
             off=415,
             data=image[415 : 415 + 474],
         ),
-        timeout_s=2.500,
+        timeout_s=2.5,
     )
 
     # assert that upload() raises SMPUploadError
@@ -388,7 +388,7 @@ async def test_upload_hello_world_bin_encoded(
 @pytest.mark.asyncio
 async def test_upload_file() -> None:
     m = SMPMockTransport()
-    s = SMPClient(m, "address")
+    s = SMPClient(m, "address", 2.5)
 
     s.request = AsyncMock()  # type: ignore
 
@@ -619,7 +619,7 @@ async def test_file_upload_test_encoded(max_smp_encoded_frame_size: int, line_bu
 @pytest.mark.asyncio
 async def test_download_file() -> None:
     m = SMPMockTransport()
-    s = SMPClient(m, "address")
+    s = SMPClient(m, "address", 2.5)
 
     s.request = AsyncMock()  # type: ignore
 
