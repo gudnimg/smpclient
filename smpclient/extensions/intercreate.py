@@ -43,7 +43,7 @@ class ICUploadClient(SMPClient):
         """Given an `ic.ImageUploadWrite` with empty `data`, return the largest packet possible."""
 
         h: Final = request.header
-        cbor_size, data_size = self._get_max_cbor_and_data_size(request)
+        cbor_size, data_size = self.get_max_cbor_and_data_size(request)
 
         if data_size > len(data) - request.off:  # final packet
             data_size = len(data) - request.off

@@ -415,8 +415,20 @@ class SMPClient:
         # https://datatracker.ietf.org/doc/html/rfc8949#name-core-deterministic-encoding
         return 0 if integer < 24 else 1 if integer <= 0xFF else 2 if integer <= 0xFFFF else 4
 
-    def _get_max_cbor_and_data_size(self, request: smpmsg.WriteRequest) -> tuple[int, int]:
-        """Given an `ImageUploadWrite`, return the maximum CBOR size and data size."""
+    def get_max_cbor_and_data_size(self, request: smpmsg.WriteRequest) -> tuple[int, int]:
+        """Given a `WriteRequest`, return the maximum CBOR size and data size.
+
+        Args:
+            request: request with all known fields filled out (only an unknown data
+                     field may be left at an empty value)
+
+        Returns:
+            Tuple of (max_cbor_bytes, max_data_bytes), where:
+                max_cbor_bytes: maximum CBOR-encoded bytes this packet will occupy if
+                    `max_data_bytes` are all used.
+                max_data_bytes: maximum amount of raw payload that can be stuffed into the
+                    currently-empty data field.
+        """
 
         # given empty data in the request, how many bytes are available for the data?
         unencoded_bytes_available: Final = self._transport.max_unencoded_size - len(bytes(request))
@@ -441,7 +453,7 @@ class SMPClient:
         """Given an `ImageUploadWrite` with empty `data`, return the largest packet possible."""
 
         h: Final = request.header
-        cbor_size, data_size = self._get_max_cbor_and_data_size(request)
+        cbor_size, data_size = self.get_max_cbor_and_data_size(request)
 
         if data_size > len(image) - request.off:  # final packet
             data_size = len(image) - request.off
@@ -468,7 +480,7 @@ class SMPClient:
     def _maximize_file_upload_packet(self, request: FileUpload, data: bytes) -> FileUpload:
         """Given an `FileUpload` with empty `data`, return the largest packet possible."""
         h: Final = request.header
-        cbor_size, data_size = self._get_max_cbor_and_data_size(request)
+        cbor_size, data_size = self.get_max_cbor_and_data_size(request)
         if data_size > len(data) - request.off:  # final packet
             data_size = len(data) - request.off
             cbor_size = h.length + data_size + self._cbor_integer_size(data_size)
