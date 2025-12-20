@@ -65,7 +65,7 @@ class SMPClient:
     Args:
         transport: the `SMPTransport` to use
         address: the address of the SMP server, see `smpclient.transport` for details
-        timeout: the default timeout in seconds for SMP requests
+        timeout_s: the default timeout in seconds for SMP requests
 
     Example:
 
@@ -90,22 +90,22 @@ class SMPClient:
     """
 
     def __init__(
-        self, transport: SMPTransport, address: str, timeout: float = 60.0
+        self, transport: SMPTransport, address: str, timeout_s: float = 2.5
     ):  # noqa: DOC301
         self._transport: Final = transport
         self._address: Final = address
-        self._timeout = timeout
+        self._timeout_s = timeout_s
 
-    async def connect(self, timeout_s: float | None = None) -> None:
+    async def connect(self, connect_timeout_s: float | None = None) -> None:
         """Connect to the SMP server.
 
         Args:
-            timeout_s: the timeout for the connection attempt in seconds
+            connect_timeout_s: the timeout for the connection attempt in seconds
         """
-        timeout_s = timeout_s if timeout_s is not None else self._timeout
+        connect_timeout_s = connect_timeout_s if connect_timeout_s is not None else self._timeout_s
 
-        await self._transport.connect(self._address, timeout_s)
-        await self._initialize(timeout_s)
+        await self._transport.connect(self._address, connect_timeout_s)
+        await self._initialize(self._timeout_s)
 
     async def disconnect(self) -> None:
         """Disconnect from the SMP server."""
@@ -167,7 +167,7 @@ class SMPClient:
         ```
 
         """
-        timeout_s = timeout_s if timeout_s is not None else self._timeout
+        timeout_s = timeout_s if timeout_s is not None else self._timeout_s
 
         try:
             async with timeout(timeout_s):
@@ -240,7 +240,7 @@ class SMPClient:
             SMPUploadError: if the upload routine fails
         """
         subsequent_timeout_s = (
-            subsequent_timeout_s if subsequent_timeout_s is not None else self._timeout
+            subsequent_timeout_s if subsequent_timeout_s is not None else self._timeout_s
         )
 
         response = await self.request(
@@ -319,7 +319,7 @@ class SMPClient:
         Raises:
             SMPUploadError: if the upload routine fails
         """
-        timeout_s = timeout_s if timeout_s is not None else self._timeout
+        timeout_s = timeout_s if timeout_s is not None else self._timeout_s
 
         response = await self.request(
             self._maximize_file_upload_packet(
@@ -372,7 +372,7 @@ class SMPClient:
         Raises:
             SMPUploadError: if the download routine fails
         """
-        timeout_s = timeout_s if timeout_s is not None else self._timeout
+        timeout_s = timeout_s if timeout_s is not None else self._timeout_s
 
         response = await self.request(FileDownload(off=0, name=file_path), timeout_s=timeout_s)
         file_length = 0
@@ -508,7 +508,7 @@ class SMPClient:
 
     async def _initialize(self, timeout_s: float | None = None) -> None:
         """Gather initialization information from the SMP server."""
-        timeout_s = timeout_s if timeout_s is not None else self._timeout
+        timeout_s = timeout_s if timeout_s is not None else self._timeout_s
 
         try:
             mcumgr_parameters = await self.request(MCUMgrParametersRead(), timeout_s=timeout_s)
