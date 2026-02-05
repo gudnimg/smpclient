@@ -8,6 +8,7 @@ from typing import Final, Protocol
 from uuid import UUID
 
 from bleak import BleakClient, BleakGATTCharacteristic, BleakScanner
+from bleak.args.winrt import WinRTClientArgs
 from bleak.backends.client import BaseBleakClient
 from bleak.backends.device import BLEDevice
 from smp import header as smphdr
@@ -66,11 +67,12 @@ logger = logging.getLogger(__name__)
 class SMPBLETransport(SMPTransport):
     """A Bluetooth Low Energy (BLE) SMPTransport."""
 
-    def __init__(self) -> None:
+    def __init__(self, winrt: WinRTClientArgs = {}) -> None:
         self._buffer = bytearray()
         self._notify_condition = asyncio.Condition()
         self._disconnected_event = asyncio.Event()
         self._disconnected_event.set()
+        self._winrt = winrt
 
         self._max_write_without_response_size = 20
         """Initially set to BLE minimum; may be mutated by the `connect()` method."""
@@ -90,6 +92,7 @@ class SMPBLETransport(SMPTransport):
             self._client = BleakClient(
                 device,
                 services=(str(SMP_SERVICE_UUID),),
+                winrt=self._winrt,
                 disconnected_callback=self._set_disconnected_event,
             )
         else:
